@@ -32,6 +32,7 @@
 
 #include "minui.h"
 #include "graphics.h"
+#include "log.h"
 #include <pixelflinger/pixelflinger.h>
 
 static GRSurface* fbdev_init(minui_backend*);
@@ -114,6 +115,9 @@ static void set_displayed_framebuffer(unsigned n)
 }
 
 static GRSurface* fbdev_init(minui_backend* backend) {
+    fb_fix_screeninfo fi;
+    void* bits;
+
     int retry = 20;
     int fd = -1;
     while (fd == -1) {
@@ -121,17 +125,17 @@ static GRSurface* fbdev_init(minui_backend* backend) {
         if (fd == -1) {
             if (--retry) {
                 // wait for init to create the device node
-                perror("cannot open fb0 (retrying)");
+                ERROR("cannot open fb0 (retrying)");
                 usleep(100000);
             } else {
-                perror("cannot open fb0 (giving up)");
+                ERROR("cannot open fb0 (giving up)");
                 return NULL;
             }
         }
     }
 
     if (ioctl(fd, FBIOGET_VSCREENINFO, &vi) < 0) {
-        perror("failed to get fb0 info (FBIOGET_VSCREENINFO)");
+        ERROR("failed to get fb0 info (FBIOGET_VSCREENINFO)");
         close(fd);
         return NULL;
     }
@@ -154,15 +158,14 @@ static GRSurface* fbdev_init(minui_backend* backend) {
     vi.bits_per_pixel = 16;
 
     if (ioctl(fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
-        perror("failed to put force_rgb_565 fb0 info");
+        ERROR("failed to put force_rgb_565 fb0 info");
         close(fd);
         return NULL;
     }
 #endif
 
-    fb_fix_screeninfo fi;
     if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
-        perror("failed to get fb0 info (FBIOGET_FSCREENINFO)");
+        ERROR("failed to get fb0 info (FBIOGET_FSCREENINFO)");
         close(fd);
         return NULL;
     }
@@ -178,7 +181,7 @@ static GRSurface* fbdev_init(minui_backend* backend) {
     // If you have a device that actually *needs* another pixel format
     // (ie, BGRX, or 565), patches welcome...
 
-    printf("fb0 reports (possibly inaccurate):\n"
+    ERROR("fb0 reports (possibly inaccurate):\n"
            "  vi.bits_per_pixel = %d\n"
            "  vi.red.offset   = %3d   .length = %3d\n"
            "  vi.green.offset = %3d   .length = %3d\n"
@@ -188,9 +191,11 @@ static GRSurface* fbdev_init(minui_backend* backend) {
            vi.green.offset, vi.green.length,
            vi.blue.offset, vi.blue.length);
 
-    void* bits = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    bits = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+
+    ERROR("bits = %d\n", bits);
     if (bits == MAP_FAILED) {
-        perror("failed to mmap framebuffer");
+        ERROR("failed to mmap framebuffer");
         close(fd);
         return NULL;
     }
@@ -202,7 +207,7 @@ static GRSurface* fbdev_init(minui_backend* backend) {
     gr_framebuffer[0].row_bytes = fi.line_length;
     gr_framebuffer[0].pixel_bytes = vi.bits_per_pixel / 8;
 #ifdef RECOVERY_GRAPHICS_FORCE_USE_LINELENGTH
-    printf("Forcing line length\n");
+    ERROR("Forcing line length\n");
     vi.xres_virtual = fi.line_length / gr_framebuffer[0].pixel_bytes;
 #endif
     gr_framebuffer[0].data = reinterpret_cast<uint8_t*>(bits);
@@ -210,20 +215,20 @@ static GRSurface* fbdev_init(minui_backend* backend) {
         printf("setting GGL_PIXEL_FORMAT_RGB_565\n");
         gr_framebuffer[0].format = GGL_PIXEL_FORMAT_RGB_565;
     } else if (vi.red.offset == 8 || vi.red.offset == 16) {
-        printf("setting GGL_PIXEL_FORMAT_BGRA_8888\n");
+        ERROR("setting GGL_PIXEL_FORMAT_BGRA_8888\n");
         gr_framebuffer[0].format = GGL_PIXEL_FORMAT_BGRA_8888;
     } else if (vi.red.offset == 0) {
-        printf("setting GGL_PIXEL_FORMAT_RGBA_8888\n");
+        ERROR("setting GGL_PIXEL_FORMAT_RGBA_8888\n");
         gr_framebuffer[0].format = GGL_PIXEL_FORMAT_RGBA_8888;
     } else if (vi.red.offset == 24) {
-        printf("setting GGL_PIXEL_FORMAT_RGBX_8888\n");
+        ERROR("setting GGL_PIXEL_FORMAT_RGBX_8888\n");
         gr_framebuffer[0].format = GGL_PIXEL_FORMAT_RGBX_8888;
     } else {
         if (vi.red.length == 8) {
-            printf("No valid pixel format detected, trying GGL_PIXEL_FORMAT_RGBX_8888\n");
+            ERROR("No valid pixel format detected, trying GGL_PIXEL_FORMAT_RGBX_8888\n");
             gr_framebuffer[0].format = GGL_PIXEL_FORMAT_RGBX_8888;
         } else {
-            printf("No valid pixel format detected, trying GGL_PIXEL_FORMAT_RGB_565\n");
+            ERROR("No valid pixel format detected, trying GGL_PIXEL_FORMAT_RGB_565\n");
             gr_framebuffer[0].format = GGL_PIXEL_FORMAT_RGB_565;
         }
     }
@@ -233,7 +238,7 @@ static GRSurface* fbdev_init(minui_backend* backend) {
     // memcpy the data into the framebuffer later.
     gr_draw = (GRSurface*) malloc(sizeof(GRSurface));
     if (!gr_draw) {
-        perror("failed to allocate gr_draw");
+        ERROR("failed to allocate gr_draw");
         close(fd);
         munmap(bits, fi.smem_len);
         return NULL;
@@ -241,7 +246,7 @@ static GRSurface* fbdev_init(minui_backend* backend) {
     memcpy(gr_draw, gr_framebuffer, sizeof(GRSurface));
     gr_draw->data = (unsigned char*) calloc(gr_draw->height * gr_draw->row_bytes, 1);
     if (!gr_draw->data) {
-        perror("failed to allocate in-memory surface");
+        ERROR("failed to allocate in-memory surface");
         close(fd);
         free(gr_draw);
         munmap(bits, fi.smem_len);
@@ -252,7 +257,7 @@ static GRSurface* fbdev_init(minui_backend* backend) {
 #ifndef RECOVERY_GRAPHICS_FORCE_SINGLE_BUFFER
     if (vi.yres * fi.line_length * 2 <= fi.smem_len) {
         double_buffered = true;
-        printf("double buffered\n");
+        ERROR("double buffered\n");
 
         memcpy(gr_framebuffer+1, gr_framebuffer, sizeof(GRSurface));
         gr_framebuffer[1].data = gr_framebuffer[0].data +
@@ -261,24 +266,23 @@ static GRSurface* fbdev_init(minui_backend* backend) {
     } else {
 #else
     {
-        printf("RECOVERY_GRAPHICS_FORCE_SINGLE_BUFFER := true\n");
+        ERROR("RECOVERY_GRAPHICS_FORCE_SINGLE_BUFFER := true\n");
 #endif
         double_buffered = false;
-        printf("single buffered\n");
+        ERROR("single buffered\n");
     }
 #if defined(RECOVERY_BGRA)
-    printf("RECOVERY_BGRA\n");
+    ERROR("RECOVERY_BGRA\n");
 #endif
     fb_fd = fd;
     set_displayed_framebuffer(0);
 
-    printf("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
+    ERROR("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
 
     fbdev_blank(backend, true);
     fbdev_blank(backend, false);
 
     smem_len = fi.smem_len;
-
     return gr_draw;
 }
 
