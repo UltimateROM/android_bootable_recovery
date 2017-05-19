@@ -117,6 +117,9 @@ static void set_displayed_framebuffer(unsigned n)
 static GRSurface* fbdev_init(minui_backend* backend) {
     fb_fix_screeninfo fi;
     void* bits;
+#ifdef STE_HARDWARE
+    void* bits_old;
+#endif
 
     int retry = 20;
     int fd = -1;
@@ -163,13 +166,11 @@ static GRSurface* fbdev_init(minui_backend* backend) {
         return NULL;
     }
 #endif
-
     if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
         ERROR("failed to get fb0 info (FBIOGET_FSCREENINFO)");
         close(fd);
         return NULL;
     }
-
     // We print this out for informational purposes only, but
     // throughout we assume that the framebuffer device uses an RGBX
     // pixel format.  This is the case for every development device I
@@ -191,9 +192,13 @@ static GRSurface* fbdev_init(minui_backend* backend) {
            vi.green.offset, vi.green.length,
            vi.blue.offset, vi.blue.length);
 
+#ifdef STE_HARDWARE
+    // what is wrong with mmap ??
+    bits_old = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+#endif
+
     bits = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
-    ERROR("bits = %d\n", bits);
     if (bits == MAP_FAILED) {
         ERROR("failed to mmap framebuffer");
         close(fd);
@@ -279,10 +284,16 @@ static GRSurface* fbdev_init(minui_backend* backend) {
 
     ERROR("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
 
+#ifndef TW_NO_SCREEN_BLANK
     fbdev_blank(backend, true);
     fbdev_blank(backend, false);
+#endif
 
     smem_len = fi.smem_len;
+
+#ifdef STE_HARDWARE
+    munmap(bits_old, fi.smem_len);
+#endif
     return gr_draw;
 }
 
