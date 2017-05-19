@@ -42,9 +42,9 @@ void load_volume_table()
     int i;
     int ret;
 
-    fstab = fs_mgr_read_fstab("/etc/recovery.fstab");
+    fstab = fs_mgr_read_fstab("/etc/twrp.fstab");
     if (!fstab) {
-        LOGE("failed to read /etc/recovery.fstab\n");
+        LOGE("failed to read /etc/twrp.fstab\n");
         return;
     }
 

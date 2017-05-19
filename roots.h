@@ -21,7 +21,7 @@
 
 typedef struct fstab_rec Volume;
 
-// Load and parse volume data from /etc/recovery.fstab.
+// Load and parse volume data from /etc/twrp.fstab.
 void load_volume_table();
 
 // Return the Volume* record for this path (or NULL).

@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include "gui/twmsg.h"
+#include "log.h"
 
 #include "cutils/properties.h"
 #include "bootloader_message/bootloader_message.h"
@@ -116,15 +117,15 @@ int main(int argc, char **argv) {
 	symlink("/proc/mounts", "/etc/mtab");
 	if (TWFunc::Path_Exists("/etc/twrp.fstab")) {
 		if (TWFunc::Path_Exists("/etc/recovery.fstab")) {
-			printf("Renaming regular /etc/recovery.fstab -> /etc/recovery.fstab.bak\n");
-			rename("/etc/recovery.fstab", "/etc/recovery.fstab.bak");
+			ERROR("Renaming regular /etc/recovery.fstab -> /etc/recovery.fstab.bak (not really)\n");
+			//rename("/etc/recovery.fstab", "/etc/recovery.fstab.bak");
 		}
-		printf("Moving /etc/twrp.fstab -> /etc/recovery.fstab\n");
-		rename("/etc/twrp.fstab", "/etc/recovery.fstab");
+		ERROR("Moving /etc/twrp.fstab -> /etc/recovery.fstab (not really)\n");
+		//rename("/etc/twrp.fstab", "/etc/recovery.fstab");
 	}
 	printf("=> Processing recovery.fstab\n");
-	if (!PartitionManager.Process_Fstab("/etc/recovery.fstab", 1)) {
-		LOGERR("Failing out of recovery due to problem with recovery.fstab.\n");
+	if (!PartitionManager.Process_Fstab("/etc/twrp.fstab", 1)) {
+		ERROR("Failing out of recovery due to problem with twrp.fstab.\n");
 		return -1;
 	}
 	PartitionManager.Output_Partition_Logging();
