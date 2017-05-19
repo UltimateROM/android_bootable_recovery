@@ -410,10 +410,12 @@ ifneq ($(TW_NO_EXFAT), true)
     endif
 endif
 ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
-    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
-        LOCAL_ADDITIONAL_DEPENDENCIES += sgdisk
-    else
-        LOCAL_ADDITIONAL_DEPENDENCIES += sgdisk_static
+    ifeq ($(ONE_SHOT_MAKEFILE),)
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
+            LOCAL_ADDITIONAL_DEPENDENCIES += sgdisk
+        else
+            LOCAL_ADDITIONAL_DEPENDENCIES += sgdisk_static
+        endif
     endif
 endif
 ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
@@ -635,8 +637,10 @@ LOCAL_STATIC_LIBRARIES := libcrypto_static
 include $(BUILD_STATIC_LIBRARY)
 
 commands_recovery_local_path := $(LOCAL_PATH)
-include $(LOCAL_PATH)/tests/Android.mk \
-    $(LOCAL_PATH)/tools/Android.mk \
+ifeq ($(ONE_SHOT_MAKEFILE),)
+include $(LOCAL_PATH)/tests/Android.mk
+endif
+include $(LOCAL_PATH)/tools/Android.mk \
     $(LOCAL_PATH)/edify/Android.mk \
     $(LOCAL_PATH)/otafault/Android.mk \
     $(LOCAL_PATH)/bootloader_message/Android.mk \
