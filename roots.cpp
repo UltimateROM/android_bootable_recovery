@@ -32,6 +32,7 @@
 #include "make_ext4fs.h"
 #include "wipe.h"
 #include "cryptfs.h"
+#include "log.h"
 
 static struct fstab *fstab = NULL;
 
@@ -42,7 +43,16 @@ void load_volume_table()
     int i;
     int ret;
 
-    fstab = fs_mgr_read_fstab("/etc/twrp.fstab");
+    if (access("/ramdisk/twrp.fstab")) {
+        ERROR("using /ramdisk/twrp.fstab\n");
+        fstab = fs_mgr_read_fstab("/ramdisk/twrp.fstab");
+    }
+
+    if (!fstab) {
+        ERROR("using /etc/twrp.fstab\n");
+        fstab = fs_mgr_read_fstab("/etc/twrp.fstab");
+    }
+
     if (!fstab) {
         LOGE("failed to read /etc/twrp.fstab\n");
         return;

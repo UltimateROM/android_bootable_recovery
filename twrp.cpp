@@ -68,6 +68,9 @@ static void Print_Prop(const char *key, const char *name, void *cookie) {
 }
 
 int main(int argc, char **argv) {
+	char crash_prop_val[PROPERTY_VALUE_MAX];
+	int crash_counter, res = 0;
+
 	// Recovery needs to install world-readable files, so clear umask
 	// set by init
 	umask(0);
@@ -97,8 +100,6 @@ int main(int argc, char **argv) {
 	datamedia = true;
 #endif
 
-	char crash_prop_val[PROPERTY_VALUE_MAX];
-	int crash_counter;
 	property_get("twrp.crash_counter", crash_prop_val, "-1");
 	crash_counter = atoi(crash_prop_val) + 1;
 	snprintf(crash_prop_val, sizeof(crash_prop_val), "%d", crash_counter);
@@ -123,11 +124,22 @@ int main(int argc, char **argv) {
 		ERROR("Moving /etc/twrp.fstab -> /etc/recovery.fstab (not really)\n");
 		//rename("/etc/twrp.fstab", "/etc/recovery.fstab");
 	}
-	printf("=> Processing recovery.fstab\n");
-	if (!PartitionManager.Process_Fstab("/etc/twrp.fstab", 1)) {
-		ERROR("Failing out of recovery due to problem with twrp.fstab.\n");
-		return -1;
+	ERROR("=> Processing recovery.fstab\n");
+
+        struct stat tmp_stat;
+	if (!stat("/ramdisk/twrp.fstab", &tmp_stat)) {
+		ERROR("using /ramdisk/twrp.fstab\n");
+		res = PartitionManager.Process_Fstab("/ramdisk/twrp.fstab", 1);
 	}
+
+	if (!res) {
+		ERROR("using /etc/twrp.fstab\n");
+		if (!PartitionManager.Process_Fstab("/etc/twrp.fstab", 1)) {
+			ERROR("Failing out of recovery due to problem with twrp.fstab.\n");
+			return -1;
+		}
+	}
+
 	PartitionManager.Output_Partition_Logging();
 	// Load up all the resources
 	gui_loadResources();
