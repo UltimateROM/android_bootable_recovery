@@ -1006,8 +1006,8 @@ void DataManager::ReadSettingsFile(void)
 
 	memset(mkdir_path, 0, sizeof(mkdir_path));
 	memset(settings_file, 0, sizeof(settings_file));
-	sprintf(mkdir_path, "%s/TWRP", GetSettingsStoragePath().c_str());
-	sprintf(settings_file, "%s/.twrps", mkdir_path);
+	sprintf(mkdir_path, "%s/TWRP3", GetSettingsStoragePath().c_str());
+	sprintf(settings_file, "%s/.twrps3", mkdir_path);
 
 	if (!PartitionManager.Mount_Settings_Storage(false))
 	{
