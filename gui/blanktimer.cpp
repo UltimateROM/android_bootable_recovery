@@ -68,7 +68,7 @@ void blanktimer::checkForTimeout() {
 		state = kOff;
 		TWFunc::Set_Brightness("0");
 		TWFunc::check_and_run_script("/sbin/postscreenblank.sh", "blank");
-		PageManager::ChangeOverlay("lock");
+		//PageManager::ChangeOverlay("lock");
 	}
 #ifndef TW_NO_SCREEN_BLANK
 	if (state == kOff) {
@@ -145,7 +145,7 @@ void blanktimer::blank(void) {
 void blanktimer::toggleBlank(void) {
 	if (state == kOn) {
 		blank();
-		PageManager::ChangeOverlay("lock");
+		//PageManager::ChangeOverlay("lock");
 	} else {
 		resetTimerAndUnblank();
 	}
