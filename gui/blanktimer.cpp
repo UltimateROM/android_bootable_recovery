@@ -20,6 +20,7 @@ using namespace std;
 #include <string>
 #include <pthread.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 #include "pages.hpp"
@@ -68,8 +69,12 @@ void blanktimer::checkForTimeout() {
 		state = kOff;
 		TWFunc::Set_Brightness("0");
 		TWFunc::check_and_run_script("/sbin/postscreenblank.sh", "blank");
-		//PageManager::ChangeOverlay("lock");
+		struct stat tmp_stat;
+		if (stat("/ramdisk/.dont_lock", &tmp_stat)) {
+			PageManager::ChangeOverlay("lock");
+		}
 	}
+
 #ifndef TW_NO_SCREEN_BLANK
 	if (state == kOff) {
 		gr_fb_blank(true);
@@ -145,7 +150,10 @@ void blanktimer::blank(void) {
 void blanktimer::toggleBlank(void) {
 	if (state == kOn) {
 		blank();
-		//PageManager::ChangeOverlay("lock");
+	        struct stat tmp_stat;
+	        if (stat("/ramdisk/.dont_lock", &tmp_stat)) {
+			PageManager::ChangeOverlay("lock");
+		}
 	} else {
 		resetTimerAndUnblank();
 	}
