@@ -203,10 +203,10 @@
 		<variable name="listbox_timezone_height" value="756"/>
 		<variable name="listbox_settings_height" value="960"/>
 		<variable name="fastscroll_w" value="24"/>
-		<variable name="fastscroll_linew" value="4"/>
+		<variable name="fastscroll_linew" value="7"/>
 		<variable name="fastscroll_rectw" value="24"/>
 		<variable name="fastscroll_recth" value="108"/>
-		<variable name="slidervalue_lineh" value="6"/>
+		<variable name="slidervalue_lineh" value="7"/>
 		<variable name="slidervalue_padding" value="0"/>
 		<variable name="slidervalue_sliderw" value="72"/>
 		<variable name="slidervalue_sliderh" value="108"/>
