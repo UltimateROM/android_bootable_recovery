@@ -1947,7 +1947,6 @@ int GUIAction::installapp(std::string arg __unused)
 		if (DataManager::GetIntValue("tw_mount_system_ro") > 0 || DataManager::GetIntValue("tw_app_install_system") == 0) {
 			if (PartitionManager.Mount_By_Path("/data", true)) {
 				string install_path = "/data/app";
-				string context = "u:object_r:apk_data_file:s0";
 				if (!TWFunc::Path_Exists(install_path)) {
 					if (mkdir(install_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
 						LOGERR("Error making %s directory: %s\n", install_path.c_str(), strerror(errno));
@@ -1955,10 +1954,6 @@ int GUIAction::installapp(std::string arg __unused)
 					}
 					if (chown(install_path.c_str(), 1000, 1000)) {
 						LOGERR("chown %s error: %s\n", install_path.c_str(), strerror(errno));
-						goto exit;
-					}
-					if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
-						LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
 						goto exit;
 					}
 				}
@@ -1971,10 +1966,6 @@ int GUIAction::installapp(std::string arg __unused)
 					LOGERR("chown %s error: %s\n", install_path.c_str(), strerror(errno));
 					goto exit;
 				}
-				if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
-					LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
-					goto exit;
-				}
 				install_path += "/base.apk";
 				if (TWFunc::copy_file("/sbin/me.twrp.twrpapp.apk", install_path, 0644)) {
 					LOGERR("Error copying apk file\n");
@@ -1982,10 +1973,6 @@ int GUIAction::installapp(std::string arg __unused)
 				}
 				if (chown(install_path.c_str(), 1000, 1000)) {
 					LOGERR("chown %s error: %s\n", install_path.c_str(), strerror(errno));
-					goto exit;
-				}
-				if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
-					LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
 					goto exit;
 				}
 				sync();
@@ -1997,24 +1984,15 @@ int GUIAction::installapp(std::string arg __unused)
 				if (TWFunc::Path_Exists("/system/system"))
 					base_path += "/system"; // For devices with system as a root file system (e.g. Pixel)
 				string install_path = base_path + "/priv-app";
-				string context = "u:object_r:system_file:s0";
 				if (!TWFunc::Path_Exists(install_path))
 					install_path = base_path + "/app";
 				if (TWFunc::Path_Exists(install_path)) {
 					install_path += "/twrpapp";
 					LOGINFO("Installing app to '%s'\n", install_path.c_str());
 					if (mkdir(install_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0) {
-						if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
-							LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
-							goto exit;
-						}
 						install_path += "/me.twrp.twrpapp.apk";
 						if (TWFunc::copy_file("/sbin/me.twrp.twrpapp.apk", install_path, 0644)) {
 							LOGERR("Error copying apk file\n");
-							goto exit;
-						}
-						if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
-							LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
 							goto exit;
 						}
 						sync();

@@ -65,8 +65,6 @@ extern "C" {
 	#define CRYPT_FOOTER_OFFSET 0x4000
 #endif
 }
-#include <selinux/selinux.h>
-#include <selinux/label.h>
 #ifdef HAVE_CAPABILITIES
 #include <sys/capability.h>
 #include <sys/xattr.h>
@@ -77,7 +75,6 @@ extern "C" {
 
 using namespace std;
 
-extern struct selabel_handle *selinux_handle;
 extern bool datamedia;
 
 struct flag_list {
@@ -1919,12 +1916,9 @@ bool TWPartition::Wipe_EXT4() {
 
 	gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("make_ext4fs"));
 
-	if (!selinux_handle || selabel_lookup(selinux_handle, &secontext, Mount_Point.c_str(), S_IFDIR) < 0) {
-		LOGINFO("Cannot lookup security context for '%s'\n", Mount_Point.c_str());
-		ret = make_ext4fs(Actual_Block_Device.c_str(), Length, Mount_Point.c_str(), NULL);
-	} else {
-		ret = make_ext4fs(Actual_Block_Device.c_str(), Length, Mount_Point.c_str(), selinux_handle);
-	}
+	LOGINFO("Cannot lookup security context for '%s'\n", Mount_Point.c_str());
+	ret = make_ext4fs(Actual_Block_Device.c_str(), Length, Mount_Point.c_str(), NULL);
+
 	if (ret != 0) {
 		gui_msg(Msg(msg::kError, "unable_to_wipe=Unable to wipe {1}.")(Display_Name));
 		return false;

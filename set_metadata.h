@@ -29,7 +29,6 @@
 #define _RECOVERY_SET_CONTEXTS_H
 
 #include <sys/stat.h>
-#include "selinux/selinux.h"
 
 int tw_get_default_metadata(const char* filename);
 int tw_set_default_metadata(const char* filename);

@@ -475,26 +475,11 @@ ifeq ($(shell test $(CM_PLATFORM_SDK_VERSION) -ge 3; echo $$?),0)
 endif
 endif
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 25; echo $$?),0)
-    LOCAL_ADDITIONAL_DEPENDENCIES += file_contexts_text
-endif
-
 ifeq ($(BOARD_CACHEIMAGE_PARTITION_SIZE),)
 LOCAL_REQUIRED_MODULES := recovery-persist recovery-refresh
 endif
 
 include $(BUILD_EXECUTABLE)
-
-# Symlink for file_contexts
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := file_contexts_text
-LOCAL_MODULE_TAGS := optional
-LOCAL_REQUIRED_MODULES := file_contexts.bin
-LOCAL_POST_INSTALL_CMD := \
-    $(hide) cp -f $(OUT)/obj/ETC/file_contexts.bin_intermediates/file_contexts.concat.tmp $(TARGET_RECOVERY_ROOT_OUT)/file_contexts
-
-include $(BUILD_PHONY_PACKAGE)
 
 ifneq ($(TW_USE_TOOLBOX), true)
 include $(CLEAR_VARS)

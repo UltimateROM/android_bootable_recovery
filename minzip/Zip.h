@@ -18,9 +18,6 @@
 extern "C" {
 #endif
 
-#include <selinux/selinux.h>
-#include <selinux/label.h>
-
 /*
  * One entry in the Zip archive.  Treat this as opaque -- use accessors below.
  *
@@ -159,6 +156,8 @@ bool mzExtractZipEntryToBuffer(const ZipArchive *pArchive,
  *
  * Returns true on success, false on failure.
  */
+struct selabel_handle;
+
 bool mzExtractRecursive(const ZipArchive *pArchive,
         const char *zipDir, const char *targetDir,
         const struct utimbuf *timestamp,

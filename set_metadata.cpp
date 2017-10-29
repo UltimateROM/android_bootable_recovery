@@ -28,62 +28,24 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "selinux/selinux.h"
-
-static security_context_t selinux_context;
 struct stat s;
 static int has_stat = 0;
 
 int tw_get_context(const char* filename) {
-	if (lgetfilecon(filename, &selinux_context) >= 0) {
-		printf("tw_get_context got selinux context: %s\n", selinux_context);
-		return 0;
-	} else {
-		printf("tw_get_context failed to get selinux context\n");
-		selinux_context = NULL;
-	}
-	return -1;
+	return 0;
 }
 
 int tw_get_stat(const char* filename) {
-	if (lstat(filename, &s) == 0) {
-		has_stat = 1;
-		return 0;
-	}
-	printf("tw_get_stat failed to lstat '%s'\n", filename);
-	return -1;
+	return 0;
 }
 
 int tw_get_default_metadata(const char* filename) {
-	if (tw_get_context(filename) == 0 && tw_get_stat(filename) == 0)
-		return 0;
-	return -1;
+	return 0;
 }
 
 // Most of this logging is disabled to prevent log spam if we are trying
 // to set contexts and permissions on file systems that do not support
 // these types of things (e.g. vfat / FAT / FAT32).
 int tw_set_default_metadata(const char* filename) {
-	int ret = 0;
-	struct stat st;
-
-	if (selinux_context == NULL) {
-		//printf("selinux_context was null, '%s'\n", filename);
-		ret = -1;
-	} else if (lsetfilecon(filename, selinux_context) < 0) {
-		//printf("Failed to set default contexts on '%s'.\n", filename);
-		ret = -1;
-	}
-
-	if (lstat(filename, &st) == 0 && st.st_mode & S_IFREG && chmod(filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH) < 0) {
-		//printf("Failed to chmod '%s'\n", filename);
-		ret = -1;
-	}
-
-	if (has_stat && chown(filename, s.st_uid, s.st_gid) < 0) {
-		//printf("Failed to lchown '%s'.\n", filename);
-		ret = -1;
-	}
-	//printf("Done trying to set defaults on '%s'\n");
-	return ret;
+	return 0;
 }
