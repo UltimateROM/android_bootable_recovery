@@ -17,21 +17,14 @@ LOCAL_PATH := $(call my-dir)
 ifdef project-path-for
     ifeq ($(LOCAL_PATH),$(call project-path-for,recovery))
         PROJECT_PATH_AGREES := true
-        BOARD_SEPOLICY_DIRS += $(call project-path-for,recovery)/sepolicy
     endif
 else
     ifeq ($(LOCAL_PATH),bootable/recovery)
         PROJECT_PATH_AGREES := true
-        BOARD_SEPOLICY_DIRS += bootable/recovery/sepolicy
     endif
 endif
 
 ifeq ($(PROJECT_PATH_AGREES),true)
-
-ifneq (,$(filter $(PLATFORM_SDK_VERSION), 21 22))
-# Make recovery domain permissive for TWRP
-    BOARD_SEPOLICY_UNION += twrp.te
-endif
 
 include $(CLEAR_VARS)
 
@@ -160,8 +153,6 @@ ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     endif
 endif
 
-LOCAL_C_INCLUDES += external/libselinux/include
-LOCAL_SHARED_LIBRARIES += libselinux
 LOCAL_CFLAGS += -g
 ifneq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_CFLAGS += -DUSE_EXT4
@@ -410,12 +401,10 @@ ifneq ($(TW_NO_EXFAT), true)
     endif
 endif
 ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
-    ifeq ($(ONE_SHOT_MAKEFILE),)
-        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
-            LOCAL_ADDITIONAL_DEPENDENCIES += sgdisk
-        else
-            LOCAL_ADDITIONAL_DEPENDENCIES += sgdisk_static
-        endif
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
+        LOCAL_ADDITIONAL_DEPENDENCIES += sgdisk
+    else
+        LOCAL_ADDITIONAL_DEPENDENCIES += sgdisk_static
     endif
 endif
 ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
@@ -601,7 +590,7 @@ LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := eng optional
 LOCAL_CFLAGS := -std=gnu++0x
 LOCAL_SRC_FILES := adb_install.cpp asn1_decoder.cpp legacy_property_service.cpp set_metadata.cpp tw_atomic.cpp installcommand.cpp
-LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils libfusesideload libselinux libminzip
+LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils libfusesideload libminzip
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libstdc++ libstlport
@@ -637,10 +626,8 @@ LOCAL_STATIC_LIBRARIES := libcrypto_static
 include $(BUILD_STATIC_LIBRARY)
 
 commands_recovery_local_path := $(LOCAL_PATH)
-ifeq ($(ONE_SHOT_MAKEFILE),)
-include $(LOCAL_PATH)/tests/Android.mk
-endif
-include $(LOCAL_PATH)/tools/Android.mk \
+include $(LOCAL_PATH)/tests/Android.mk \
+    $(LOCAL_PATH)/tools/Android.mk \
     $(LOCAL_PATH)/edify/Android.mk \
     $(LOCAL_PATH)/otafault/Android.mk \
     $(LOCAL_PATH)/bootloader_message/Android.mk \
