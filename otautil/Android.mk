@@ -23,6 +23,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_STATIC_LIBRARIES := \
     libselinux \
+    libziparchive \
     libbase
 
 LOCAL_MODULE := libotautil
