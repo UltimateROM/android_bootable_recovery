@@ -42,8 +42,8 @@ endif
 LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UPDATER_LIBS) $(TARGET_RECOVERY_UPDATER_EXTRA_LIBS)
 LOCAL_STATIC_LIBRARIES += libapplypatch libedify libmtdutils libminzip libz
 LOCAL_STATIC_LIBRARIES += libmincrypt libbz libxz
-LOCAL_STATIC_LIBRARIES += libcutils liblog
-LOCAL_SHARED_LIBRARIES := libc
+LOCAL_STATIC_LIBRARIES += libcutils_nolto liblog
+LOCAL_STATIC_LIBRARIES += libc_nolto
 LOCAL_STATIC_LIBRARIES += libselinux
 tune2fs_static_libraries := \
  libext2_com_err \
@@ -107,6 +107,6 @@ inc_dep_file :=
 LOCAL_MODULE := updater
 LOCAL_32_BIT_ONLY := true
 
-#LOCAL_FORCE_STATIC_EXECUTABLE := true
+LOCAL_FORCE_STATIC_EXECUTABLE_NOLTO := true
 
 include $(BUILD_EXECUTABLE)
