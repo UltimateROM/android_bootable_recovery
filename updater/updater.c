@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <string.h>
+#include <cutils/properties.h>
 
 #include "edify/expr.h"
 #include "updater.h"
@@ -34,6 +34,8 @@
 // Where in the package we expect to find the edify script to execute.
 // (Note it's "updateR-script", not the older "update-script".)
 #define SCRIPT_NAME "META-INF/com/google/android/updater-script"
+// golden/janice unification
+#define UNIFIED_BUILD
 
 struct selabel_handle *sehandle;
 
@@ -83,11 +85,33 @@ int main(int argc, char** argv) {
         return 3;
     }
 
+#ifndef UNIFIED_BUILD
     const ZipEntry* script_entry = mzFindZipEntry(&za, SCRIPT_NAME);
     if (script_entry == NULL) {
         printf("failed to find %s in %s\n", SCRIPT_NAME, package_filename);
         return 4;
     }
+#else
+    // deviceName - the name of the device (eg. golden)
+    char deviceName[PROPERTY_VALUE_MAX];
+    property_get("ro.product.device", deviceName, "");
+	
+    // scriptName - due to golden and janice having different partition layouts
+    // (eg. /system is mmcblk0p22 on golden and mmcblk0p3 on janice), we need to have
+    // different updater scripts for the two devices.
+    char scriptName[PROPERTY_VALUE_MAX];
+    if (!strcmp(deviceName, "codina")) strcpy(scriptName, "META-INF/com/google/android/updater-script-janice"); // janice will use updater-script-janice
+    else strcpy(scriptName, "META-INF/com/google/android/updater-script"); // while golden will use updater-script
+	
+    // print out the device name for debug purposes
+    printf("%s device detected", deviceName);
+	
+    const ZipEntry* script_entry = mzFindZipEntry(&za, scriptName);
+    if (script_entry == NULL) {
+        printf("failed to find %s in %s\n", scriptName, package_filename);
+        return 4;
+    }
+#endif
 
     char* script = malloc(script_entry->uncompLen+1);
     if (!mzReadZipEntry(&za, script_entry, script, script_entry->uncompLen)) {
@@ -167,3 +191,4 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
