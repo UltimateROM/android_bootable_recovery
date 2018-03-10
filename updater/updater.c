@@ -95,17 +95,18 @@ int main(int argc, char** argv) {
     // deviceName - the name of the device (eg. golden)
     char deviceName[PROPERTY_VALUE_MAX];
     property_get("ro.product.device", deviceName, "");
-	
+
     // scriptName - due to golden and janice having different partition layouts
     // (eg. /system is mmcblk0p22 on golden and mmcblk0p3 on janice), we need to have
     // different updater scripts for the two devices.
     char scriptName[PROPERTY_VALUE_MAX];
-    if (!strcmp(deviceName, "codina")) strcpy(scriptName, "META-INF/com/google/android/updater-script-janice"); // janice will use updater-script-janice
+    if (strcmp(deviceName, "codina")) strcpy(scriptName, "META-INF/com/google/android/updater-script-codina");
+    else if (strcmp(deviceName, "janice")) strcpy(scriptName, "META-INF/com/google/android/updater-script-janice");
     else strcpy(scriptName, "META-INF/com/google/android/updater-script"); // while golden will use updater-script
-	
+
     // print out the device name for debug purposes
     printf("%s device detected", deviceName);
-	
+
     const ZipEntry* script_entry = mzFindZipEntry(&za, scriptName);
     if (script_entry == NULL) {
         printf("failed to find %s in %s\n", scriptName, package_filename);
